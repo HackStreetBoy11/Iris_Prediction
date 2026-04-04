@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request
 import numpy as np
 import joblib
+import os
 
 app = Flask(__name__)
 
@@ -12,18 +13,23 @@ scaler = None
 classes = ['setosa', 'versicolor', 'virginica']
 
 
-# 🔥 Lazy loading function
 def load_resources():
     global model, scaler
     if model is None or scaler is None:
         from tensorflow.keras.models import load_model
-        import os
 
         model_path = os.path.join("models", "model.keras")
         scaler_path = os.path.join("models", "scaler.pkl")
 
         model = load_model(model_path, compile=False)
         scaler = joblib.load(scaler_path)
+        print("✅ Model and scaler loaded successfully.")
+
+
+# ✅ Warm up on first request (not on user's first prediction)
+@app.before_request
+def warmup():
+    load_resources()
 
 
 @app.route("/")
@@ -34,9 +40,6 @@ def home():
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
-        # Load model only when needed ✅
-        load_resources()
-
         # Get inputs
         sepal_length = float(request.form["sepal_length"])
         sepal_width = float(request.form["sepal_width"])
