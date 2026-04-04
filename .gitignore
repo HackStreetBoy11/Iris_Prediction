@@ -27,10 +27,6 @@ Thumbs.db
 # 🔹 Logs
 *.log
 
-# 🔹 Model files (optional: ignore if too large)
-*.h5
-*.keras
-*.pkl
 
 # 🔹 Data files (optional)
 *.csv
