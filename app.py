@@ -1,25 +1,43 @@
 from flask import Flask, render_template, request
 import numpy as np
-from tensorflow.keras.models import load_model
 import joblib
 
 app = Flask(__name__)
 
-# Load model + scaler
-model = load_model("models/model.keras", compile=False)
-scaler = joblib.load("models/scaler.pkl")
+# Global variables (initially None)
+model = None
+scaler = None
 
 # Class labels
 classes = ['setosa', 'versicolor', 'virginica']
+
+
+# 🔥 Lazy loading function
+def load_resources():
+    global model, scaler
+    if model is None or scaler is None:
+        from tensorflow.keras.models import load_model
+        import os
+
+        model_path = os.path.join("models", "model.keras")
+        scaler_path = os.path.join("models", "scaler.pkl")
+
+        model = load_model(model_path, compile=False)
+        scaler = joblib.load(scaler_path)
+
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
+
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
-        # Get individual inputs
+        # Load model only when needed ✅
+        load_resources()
+
+        # Get inputs
         sepal_length = float(request.form["sepal_length"])
         sepal_width = float(request.form["sepal_width"])
         petal_length = float(request.form["petal_length"])
@@ -28,7 +46,7 @@ def predict():
         # Convert to array
         data = np.array([[sepal_length, sepal_width, petal_length, petal_width]])
 
-        # 🔥 Apply scaling (VERY IMPORTANT)
+        # Scale data
         data = scaler.transform(data)
 
         # Prediction
@@ -45,6 +63,7 @@ def predict():
 
     except Exception as e:
         return str(e)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
