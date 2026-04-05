@@ -5,13 +5,10 @@ import os
 
 app = Flask(__name__)
 
-# Global variables (initially None)
 model = None
 scaler = None
 
-# Class labels
 classes = ['setosa', 'versicolor', 'virginica']
-
 
 def load_resources():
     global model, scaler
@@ -25,12 +22,8 @@ def load_resources():
         scaler = joblib.load(scaler_path)
         print("✅ Model and scaler loaded successfully.")
 
-
-# ✅ Warm up on first request (not on user's first prediction)
-@app.before_request
-def warmup():
-    load_resources()
-
+# ✅ LOAD ON STARTUP (FIX)
+load_resources()
 
 @app.route("/")
 def home():
